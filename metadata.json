@@ -1,0 +1,8 @@
+{
+  "name": "multicore-system-monitor",
+  "description": "Show CPU consumption of every core",
+  "uuid": "multicore-system-monitor@igrek.dev",
+  "shell-version": [
+    "44"
+  ]
+}
