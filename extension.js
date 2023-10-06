@@ -1,47 +1,83 @@
-/* extension.js
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
-
-/* exported init */
-
 const GETTEXT_DOMAIN = 'my-indicator-extension';
 
 const { GObject, St } = imports.gi;
-
 const ExtensionUtils = imports.misc.extensionUtils;
+//const Me = ExtensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
+const Clutter = imports.gi.Clutter;
+const GLib = imports.gi.GLib;
 
-const _ = ExtensionUtils.gettext;
+const {
+    gettext: _,
+} = ExtensionUtils;
+
+// const CpuMonitor = new Lang.Class({
+//     Name: 'CpuMonitor',
+
+//     _init: function() {
+//         this.actor = new St.BoxLayout({ style_class: 'cpu-monitor-box' });
+//         this.actor.set_vertical(true);
+
+//         this.cpuUsage = [];
+//         this.numCores = GLib.get_num_processors();
+
+//         for (let i = 0; i < this.numCores; i++) {
+//             let bar = new St.Bin({
+//                 style_class: 'cpu-monitor-bar',
+//                 reactive: false,
+//                 can_focus: false,
+//                 x_fill: true,
+//                 y_fill: true,
+//                 track_hover: false,
+//             });
+//             this.cpuUsage[i] = bar;
+//             this.actor.add_child(bar);
+//         }
+
+//         this.updateCpuUsage();
+//     },
+
+//     updateCpuUsage: function() {
+//         let [, usage] = GLib.get_cpu_usage();
+
+//         for (let i = 0; i < this.numCores; i++) {
+//             this.cpuUsage[i].set_height(usage[i] / 100 * Main.panel.height);
+//         }
+
+//         timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, Lang.bind(this, this.updateCpuUsage));
+//     },
+
+//     destroy: function() {
+//         for (let i = 0; i < this.numCores; i++) {
+//             this.cpuUsage[i].destroy();
+//         }
+
+//         this.actor.destroy();
+//         GLib.source_remove(timeout);
+//     }
+// });
 
 const Indicator = GObject.registerClass(
 class Indicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, _('My Shiny Indicator'));
 
-        this.add_child(new St.Icon({
-            icon_name: 'face-smile-symbolic',
-            style_class: 'system-status-icon',
-        }));
+        // this.drawable = new St.DrawingArea({style_class: 'drawable'});
 
-        let item = new PopupMenu.PopupMenuItem(_('Show Notification'));
+        // this.add_child(this.drawable);
+        // this.drawRectangle()
+
+        const icon = new St.Icon({
+            icon_name: 'face-laugh-symbolic',
+            style_class: 'system-status-icon',
+        });
+        this.add_child(icon);
+
+        let item = new PopupMenu.PopupMenuItem(_('Notify'));
         item.connect('activate', () => {
-            Main.notify(_('Whatʼs up, folks?'));
+            Main.notify(_('notification'));
         });
         this.menu.addMenuItem(item);
     }
@@ -50,18 +86,36 @@ class Indicator extends PanelMenu.Button {
 class Extension {
     constructor(uuid) {
         this._uuid = uuid;
-
         ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
     }
 
     enable() {
         this._indicator = new Indicator();
         Main.panel.addToStatusArea(this._uuid, this._indicator);
+        // this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
+        
+        // // Add an icon
+        // const icon = new St.Icon({
+        //     icon_name: 'face-laugh-symbolic',
+        //     style_class: 'system-status-icon',
+        // });
+        // this._indicator.add_child(icon);
+
+        // // Add the indicator to the panel
+        // Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
+
+        // // Add a menu item to open the preferences window
+        // this._indicator.menu.addAction(_('Preferences'),
+        //     () => ExtensionUtils.openPrefs());
+
+        // this._count = 0;
     }
 
     disable() {
-        this._indicator.destroy();
-        this._indicator = null;
+        if (this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
+        }
     }
 }
 
