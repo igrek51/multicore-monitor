@@ -15,14 +15,11 @@ const {
 
 // const CpuMonitor = new Lang.Class({
 //     Name: 'CpuMonitor',
-
 //     _init: function() {
 //         this.actor = new St.BoxLayout({ style_class: 'cpu-monitor-box' });
 //         this.actor.set_vertical(true);
-
 //         this.cpuUsage = [];
 //         this.numCores = GLib.get_num_processors();
-
 //         for (let i = 0; i < this.numCores; i++) {
 //             let bar = new St.Bin({
 //                 style_class: 'cpu-monitor-bar',
@@ -35,48 +32,17 @@ const {
 //             this.cpuUsage[i] = bar;
 //             this.actor.add_child(bar);
 //         }
-
 //         this.updateCpuUsage();
 //     },
-
 //     updateCpuUsage: function() {
 //         let [, usage] = GLib.get_cpu_usage();
-
 //         for (let i = 0; i < this.numCores; i++) {
 //             this.cpuUsage[i].set_height(usage[i] / 100 * Main.panel.height);
 //         }
-
 //         timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, Lang.bind(this, this.updateCpuUsage));
 //     },
 
-const Indicator = GObject.registerClass(
-class Indicator extends PanelMenu.Button {
-    _init() {
-        super._init(0.0, Me.metadata.name);
-
-        // this.drawable = new St.DrawingArea({style_class: 'drawable'});
-        // this.add_child(this.drawable);
-        // this.drawRectangle()
-
-        const icon = new St.Icon({
-            icon_name: 'face-laugh-symbolic',
-            style_class: 'system-status-icon',
-        });
-        this.add_child(icon);
-
-        let item = new PopupMenu.PopupMenuItem(_('Notify'));
-        item.connect('activate', () => {
-            Main.notify(_('notification'));
-        });
-        this.menu.addMenuItem(item);
-
-        let item2 = new PopupMenu.PopupMenuItem(_('Prefs'));
-        item2.connect('activate', () => {
-            ExtensionUtils.openPrefs()
-        });
-        this.menu.addMenuItem(item2);
-    }
-});
+// this.drawable = new St.DrawingArea({style_class: 'drawable'});
 
 class Extension {
     constructor(uuid) {
@@ -85,25 +51,29 @@ class Extension {
     }
 
     enable() {
-        this._indicator = new Indicator();
-        Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
-        // this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
+        this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
         
-        // // Add an icon
-        // const icon = new St.Icon({
-        //     icon_name: 'face-laugh-symbolic',
-        //     style_class: 'system-status-icon',
-        // });
-        // this._indicator.add_child(icon);
+        // Add an icon
+        const icon = new St.Icon({
+            icon_name: 'face-laugh-symbolic',
+            style_class: 'system-status-icon',
+        });
+        this._indicator.add_child(icon);
+
+        let item = new PopupMenu.PopupMenuItem(_('Notify'));
+        item.connect('activate', () => {
+            Main.notify(_('notification'));
+        });
+        this._indicator.menu.addMenuItem(item);
+
+        let item2 = new PopupMenu.PopupMenuItem(_('Prefs'));
+        item2.connect('activate', () => {
+            ExtensionUtils.openPrefs()
+        });
+        this._indicator.menu.addMenuItem(item2);
 
         // // Add the indicator to the panel
-        // Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
-
-        // // Add a menu item to open the preferences window
-        // this._indicator.menu.addAction(_('Preferences'),
-        //     () => ExtensionUtils.openPrefs());
-
-        // this._count = 0;
+        Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
     }
 
     disable() {
