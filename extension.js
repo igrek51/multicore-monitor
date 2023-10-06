@@ -2,7 +2,7 @@ const GETTEXT_DOMAIN = 'my-indicator-extension';
 
 const { GObject, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
-//const Me = ExtensionUtils.getCurrentExtension();
+const Me = ExtensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
@@ -49,23 +49,12 @@ const {
 //         timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, Lang.bind(this, this.updateCpuUsage));
 //     },
 
-//     destroy: function() {
-//         for (let i = 0; i < this.numCores; i++) {
-//             this.cpuUsage[i].destroy();
-//         }
-
-//         this.actor.destroy();
-//         GLib.source_remove(timeout);
-//     }
-// });
-
 const Indicator = GObject.registerClass(
 class Indicator extends PanelMenu.Button {
     _init() {
-        super._init(0.0, _('My Shiny Indicator'));
+        super._init(0.0, Me.metadata.name);
 
         // this.drawable = new St.DrawingArea({style_class: 'drawable'});
-
         // this.add_child(this.drawable);
         // this.drawRectangle()
 
@@ -80,6 +69,12 @@ class Indicator extends PanelMenu.Button {
             Main.notify(_('notification'));
         });
         this.menu.addMenuItem(item);
+
+        let item2 = new PopupMenu.PopupMenuItem(_('Prefs'));
+        item2.connect('activate', () => {
+            ExtensionUtils.openPrefs()
+        });
+        this.menu.addMenuItem(item2);
     }
 });
 
@@ -91,7 +86,7 @@ class Extension {
 
     enable() {
         this._indicator = new Indicator();
-        Main.panel.addToStatusArea(this._uuid, this._indicator);
+        Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
         // this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
         
         // // Add an icon
