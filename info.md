@@ -21,7 +21,7 @@ gnome-extensions list
 gnome-extensions list --enabled
 
 # Testing
-Wayland Sessions: Start a nested GNOME Shell session
+Nested Wayland session
 dbus-run-session -- gnome-shell --nested --wayland
 gnome-extensions enable 'multicore-system-monitor@igrek.dev'
 

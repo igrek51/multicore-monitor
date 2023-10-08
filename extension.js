@@ -1,4 +1,4 @@
-const GETTEXT_DOMAIN = 'my-indicator-extension';
+const GETTEXT_DOMAIN = 'my-multicore-indicator-extension';
 
 const { GObject, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -51,17 +51,18 @@ class Extension {
     }
 
     enable() {
+        log('Enabling multicore system monitor.');
         this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
         
-        // Add an icon
         const icon = new St.Icon({
             icon_name: 'face-laugh-symbolic',
             style_class: 'system-status-icon',
         });
         this._indicator.add_child(icon);
 
-        let item = new PopupMenu.PopupMenuItem(_('Notify'));
+        let item = new PopupMenu.PopupMenuItem(_('Notify me again'));
         item.connect('activate', () => {
+            log('This is a regular log message.');
             Main.notify(_('notification'));
         });
         this._indicator.menu.addMenuItem(item);
@@ -72,7 +73,6 @@ class Extension {
         });
         this._indicator.menu.addMenuItem(item2);
 
-        // // Add the indicator to the panel
         Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
     }
 
