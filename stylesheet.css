@@ -1,1 +1,4 @@
-/* Add your custom extension styling here */
+.graph-drawing-area {
+    margin: 0;
+    padding: 0;
+}

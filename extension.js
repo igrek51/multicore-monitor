@@ -13,6 +13,8 @@ const {
     gettext: _,
 } = ExtensionUtils;
 
+const COLOR_1 = Clutter.Color.from_string('#ff0000')[1];
+
 // const CpuMonitor = new Lang.Class({
 //     Name: 'CpuMonitor',
 //     _init: function() {
@@ -54,26 +56,46 @@ class Extension {
         log('Enabling multicore system monitor.');
         this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
         
-        const icon = new St.Icon({
-            icon_name: 'face-laugh-symbolic',
-            style_class: 'system-status-icon',
+        this.area = new St.DrawingArea({
+            reactive: false,
+            style_class: 'graph-drawing-area',
         });
-        this._indicator.add_child(icon);
 
-        let item = new PopupMenu.PopupMenuItem(_('Notify me again'));
-        item.connect('activate', () => {
-            log('This is a regular log message.');
-            Main.notify(_('notification'));
-        });
-        this._indicator.menu.addMenuItem(item);
+        this.area.set_width(100);
+        this.area.set_height(100);
+        this.area.connect('repaint', this._draw.bind(this));
 
-        let item2 = new PopupMenu.PopupMenuItem(_('Prefs'));
-        item2.connect('activate', () => {
-            ExtensionUtils.openPrefs()
-        });
-        this._indicator.menu.addMenuItem(item2);
+        this._indicator.add_child(this.area);
+
+
+
+        // let item = new PopupMenu.PopupMenuItem(_('Notify me again'));
+        // item.connect('activate', () => {
+        //     log('This is a regular log message.');
+        //     Main.notify(_('notification'));
+        // });
+        // this._indicator.menu.addMenuItem(item);
+
+        // let item2 = new PopupMenu.PopupMenuItem(_('Prefs'));
+        // item2.connect('activate', () => {
+        //     ExtensionUtils.openPrefs()
+        // });
+        // this._indicator.menu.addMenuItem(item2);
 
         Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
+    }
+
+    _draw() {
+        let [width, height] = this.area.get_surface_size();
+        log('size', width, height);
+        let cr = this.area.get_context();
+
+        log(Clutter.Color.from_string('#ff0000')[1].constructor.name);
+        Clutter.cairo_set_source_color(cr, COLOR_1);
+        cr.rectangle(0, 0, width, height);
+        cr.fill();
+
+        cr.$dispose();
     }
 
     disable() {
