@@ -1,5 +1,5 @@
 copy-data:
-	cp /home/ireneusz/tmp/multicore-system-monitor@igrek.dev/* /home/ireneusz/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
+	cp ~/tmp/multicore-system-monitor@igrek.dev/* ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
 
 update: copy-data
 	gnome-extensions disable 'multicore-system-monitor@igrek.dev'

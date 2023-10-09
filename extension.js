@@ -38,7 +38,7 @@ const COLOR_MEM_USED = parseColor('#F3F3F3');
 const COLOR_MEM_CACHED = parseColor('#BBBBBB');
 const COLOR_MEM_BUFFERS = parseColor('#767676');
 const COLOR_MEM_DIRTY = parseColor('#E03D45');
-const COLOR_SWAP = parseColor('#1F513080');
+const COLOR_SWAP = parseColor('#1F613070');
 
 const STAT_REFRESH_INTERVAL = 1500; // in milliseconds
 const CPU_GRAPH_WIDTH = 48;
