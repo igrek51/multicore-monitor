@@ -15,29 +15,30 @@ const {
 } = ExtensionUtils;
 const PI = 3.141592654;
 
-const COLOR_BACKGROUND = Clutter.Color.from_string('#000000')[1];
+const COLOR_BACKGROUND = parseColor('#000000');
 const CORE_COLORS = [
-    Clutter.Color.from_string('#E03D45')[1], // grapefruit
-    Clutter.Color.from_string('#F18A00')[1], // tangerine
-    Clutter.Color.from_string('#F3FF72')[1], // pastel yellow
-    Clutter.Color.from_string('#EAF6B7')[1], // cream
-    Clutter.Color.from_string('#00AA1F')[1], // green
-    Clutter.Color.from_string('#1564C0')[1], // cornflower blue
-    Clutter.Color.from_string('#9C42BA')[1], // purply
-    Clutter.Color.from_string('#F85C51')[1], // coral
-    Clutter.Color.from_string('#D3E379')[1], // greenish beige
-    Clutter.Color.from_string('#E3E3E3')[1], // pale grey
-    Clutter.Color.from_string('#FF8BA0')[1], // rose pink
-    Clutter.Color.from_string('#54BD6C')[1], // dark mint
-    Clutter.Color.from_string('#5BD8D2')[1], // topaz
-    Clutter.Color.from_string('#F2D868')[1], // pale gold
-    Clutter.Color.from_string('#134D30')[1], // evergreen
-    Clutter.Color.from_string('#33008E')[1], // indigo
+    parseColor('#E03D45'), // grapefruit
+    parseColor('#F18A00'), // tangerine
+    parseColor('#F3FF72'), // pastel yellow
+    parseColor('#EAF6B7'), // cream
+    parseColor('#00AA1F'), // green
+    parseColor('#1564C0'), // cornflower blue
+    parseColor('#9C42BA'), // purply
+    parseColor('#F85C51'), // coral
+    parseColor('#D3E379'), // greenish beige
+    parseColor('#E3E3E3'), // pale grey
+    parseColor('#FF8BA0'), // rose pink
+    parseColor('#54BD6C'), // dark mint
+    parseColor('#5BD8D2'), // topaz
+    parseColor('#F2D868'), // pale gold
+    parseColor('#134D30'), // evergreen
+    parseColor('#33008E'), // indigo
 ];
-const COLOR_MEM_USED = Clutter.Color.from_string('#F18A00')[1];
-const COLOR_MEM_CACHED = Clutter.Color.from_string('#EAF6B7')[1];
-const COLOR_MEM_BUFFERS = Clutter.Color.from_string('#E3E3E3')[1];
-const COLOR_MEM_DIRTY = Clutter.Color.from_string('#E03D45')[1];
+const COLOR_MEM_USED = parseColor('#E3E3E3');
+const COLOR_MEM_CACHED = parseColor('#FFCB85');
+const COLOR_MEM_BUFFERS = parseColor('#767676');
+const COLOR_MEM_DIRTY = parseColor('#E03D45');
+const COLOR_SWAP = parseColor('#1F4130');
 
 const STAT_REFRESH_INTERVAL = 1500; // in milliseconds
 const CPU_GRAPH_WIDTH = 48;
@@ -45,7 +46,7 @@ const MEMORY_GRAPH_WIDTH = 40;
 const MEMORY_PIE_ORIENTATION = 0;
 const DEBUG = false;
 
-let cpuUsage = [];
+let cpuUsage = []; // first line represents the total CPU usage, next - consecutive cores
 
 function getCurrentCpuUsage() {
     const file = "/proc/stat";
@@ -142,6 +143,10 @@ function formatBytes(kbs) {
     }
 }
 
+function parseColor(hashString) {
+    return Clutter.Color.from_string(hashString)[1];
+}
+
 class Extension {
     constructor(uuid) {
         this._uuid = uuid;
@@ -206,11 +211,18 @@ class Extension {
     }
 
     _drawMemory(cr, xOffset, yOffset, w, h) {
+        // Swap fill
+        Clutter.cairo_set_source_color(cr, COLOR_SWAP);
+        const swapUsage = this.memStats.swapUsage || 0;
+        cr.rectangle(xOffset, yOffset + h * (1 - swapUsage), w, h * swapUsage);
+        cr.fill();
+
         const centerX = xOffset + w/2;
         const centerY = yOffset + h/2;
         const radius = h/2;
         let angle = 0;
         
+        cr.lineWidth = 3;
         const totalMem = this.memStats.total;
         Clutter.cairo_set_source_color(cr, COLOR_MEM_USED);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.used / totalMem);
@@ -220,6 +232,7 @@ class Extension {
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.buffers / totalMem);
         Clutter.cairo_set_source_color(cr, COLOR_MEM_DIRTY);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.dirtyWriteback / totalMem);
+        cr.lineWidth = 1;
     }
 
     _drawMemoryPiece(cr, centerX, centerY, radius, startFraction, fraction) {
