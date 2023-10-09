@@ -1,5 +1,7 @@
 copy-data:
-	cp ~/tmp/multicore-system-monitor@igrek.dev/* ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
+	cp extension.js ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
+	cp metadata.json ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
+	cp stylesheet.css ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
 
 update: copy-data
 	gnome-extensions disable 'multicore-system-monitor@igrek.dev'
