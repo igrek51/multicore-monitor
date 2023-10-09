@@ -13,6 +13,7 @@ const GLib = imports.gi.GLib;
 const {
     gettext: _,
 } = ExtensionUtils;
+const PI = 3.141592654;
 
 const COLOR_BACKGROUND = Clutter.Color.from_string('#000000')[1];
 const CORE_COLORS = [
@@ -35,6 +36,8 @@ const CORE_COLORS = [
 ];
 
 const CPU_STATS_INTERVAL = 1500; // in milliseconds
+const CPU_GRAPH_WIDTH = 48;
+const MEMORY_GRAPH_WIDTH = 48;
 const DEBUG = false;
 
 let cpuUsage = [];
@@ -45,9 +48,10 @@ function getCurrentCpuUsage() {
     if (!contents[0]) {
         return [];
     }
-    const lines = contents[1].toString().split('\n');
-    // Skip first line, which represents the total CPU usage
-    for (let i = 1; i < lines.length; i++) {
+    const content = new TextDecoder().decode(contents[1]);
+    const lines = content.split('\n');
+    // first line represents the total CPU usage
+    for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         const core = i - 1;
         if (line.startsWith("cpu")) {
@@ -87,7 +91,8 @@ function getCurrentMemoryStats() {
     if (!contents[0]) {
         return {};
     }
-    const lines = contents[1].toString().split('\n');
+    const content = new TextDecoder().decode(contents[1]);
+    const lines = content.split('\n');
     let memoryStats = {};
 
     for (let i = 0; i < lines.length; i++) {
@@ -100,27 +105,40 @@ function getCurrentMemoryStats() {
         }
     }
 
-    const used = memoryStats["MemTotal"] - memoryStats["MemAvailable"];
+    const total = memoryStats["MemTotal"];
+    const used = total - memoryStats["MemAvailable"];
     const swapUsed = memoryStats["SwapTotal"] - memoryStats["SwapFree"];
+    const swapUsage = swapUsed / memoryStats["SwapTotal"];
     return {
-        total: memoryStats["MemTotal"],
+        total: total,
         free: memoryStats["MemFree"],
         buffers: memoryStats["Buffers"],
         cached: memoryStats["Cached"],
         used: used,
+        usage: used / total,
         available: memoryStats["MemAvailable"],
         dirty: memoryStats["Dirty"],
         writeback: memoryStats["Writeback"],
         swapFree: memoryStats["SwapFree"],
         swapTotal: memoryStats["SwapTotal"],
         swapUsed: swapUsed,
+        swapUsage: swapUsage,
     };
+}
+
+function formatBytes(kbs) {
+    if (kbs < 1024) {
+        return `${kbs} KiB`
+    } else if (kbs < 1024*1024) {
+        return `${(kbs/1024).toFixed(2)} MiB`
+    } else {
+        return `${(kbs/1024/1024).toFixed(2)} GiB`
+    }
 }
 
 class Extension {
     constructor(uuid) {
         this._uuid = uuid;
-        this.cpuUsage = [];
         this.memStats = {};
         ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
     }
@@ -131,17 +149,22 @@ class Extension {
         
         this.area = new St.DrawingArea({
             reactive: false,
-            width: 64,
-            height: 64,
+            width: CPU_GRAPH_WIDTH + MEMORY_GRAPH_WIDTH,
+            height: 100,
             style_class: 'graph-drawing-area',
         });
         this.area.connect('repaint', this._draw.bind(this));
-        this.timeout = Mainloop.timeout_add(CPU_STATS_INTERVAL, this.update.bind(this));
+        this.timeout = Mainloop.timeout_add(CPU_STATS_INTERVAL, this.periodicUpdate.bind(this));
         
-        let menuItem = new PopupMenu.PopupMenuItem(_('Preferences'));
-        menuItem.connect('activate', () => {
-            ExtensionUtils.openPrefs()
+        let menuBox = new St.BoxLayout({ vertical: true });
+        this.dynamicLabel = new St.Label({ text: "" });
+        menuBox.add(this.dynamicLabel);
+        let menuItem = new PopupMenu.PopupBaseMenuItem({
+            reactive: false,
+            can_focus: false,
         });
+        menuItem.actor.add_actor(menuBox);
+        
         this._indicator.menu.addMenuItem(menuItem);
         
         this._indicator.add_child(this.area);
@@ -149,37 +172,69 @@ class Extension {
     }
 
     _draw() {
-        let [w, h] = this.area.get_surface_size();
+        let [totalWidth, h] = this.area.get_surface_size();
         let cr = this.area.get_context();
-
+        // clear background
         Clutter.cairo_set_source_color(cr, COLOR_BACKGROUND);
-        cr.rectangle(0, 0, w, h);
+        cr.rectangle(0, 0, totalWidth, h);
         cr.fill();
 
-        const cores = this.cpuUsage.length;
-        const binW = w / cores;
-        for (let core = 0; core < cores; core++) {
-            const usage = this.cpuUsage[core].usage;
-            const colorIndex = core % CORE_COLORS.length;
-            Clutter.cairo_set_source_color(cr, CORE_COLORS[colorIndex]);
-            cr.rectangle(core * binW, h * (1 - usage), binW, h * usage);
-            cr.fill();
-        }
+        this._drawCpu(cr, 0, 0, CPU_GRAPH_WIDTH, h);
+        this._drawMemory(cr, CPU_GRAPH_WIDTH, 0, MEMORY_GRAPH_WIDTH, h);
 
         cr.$dispose();
     }
 
-    update() {
-        this.cpuUsage = getCurrentCpuUsage();
+    _drawCpu(cr, xOffset, yOffset, w, h) {
+        const cores = cpuUsage.length - 1;
+        const binW = w / cores;
+        for (let core = 0; core < cores; core++) {
+            const usage = cpuUsage[core + 1].usage;
+            const colorIndex = core % CORE_COLORS.length;
+            Clutter.cairo_set_source_color(cr, CORE_COLORS[colorIndex]);
+            cr.rectangle(xOffset + core * binW, yOffset + h * (1 - usage), binW, h * usage);
+            cr.fill();
+        }
+    }
+
+    _drawMemory(cr, xOffset, yOffset, w, h) {
+        const centerX = xOffset + w/2;
+        const centerY = yOffset + h/2;
+        const radius = h/2;
+        const startAngle = 0;
+        const endAngle = 3.14;
+        cr.lineWidth = 1;
+        cr.moveTo(centerX, centerY);
+        cr.arc(centerX, centerY, radius, startAngle, endAngle);
+        cr.lineTo(centerX, centerY);
+        cr.fill();
+    }
+
+    periodicUpdate() {
+        getCurrentCpuUsage();
         this.memStats = getCurrentMemoryStats();
+        this.dynamicLabel.text = this.buildIndicatorLabel();
         if (DEBUG) {
-            for (let i = 0; i < this.cpuUsage.length; i++) {
-                log(`CPU Core ${i} usage: ${this.cpuUsage[i].usage.toFixed(2)}`);
+            for (let i = 0; i < cpuUsage.length - 1; i++) {
+                log(`CPU Core ${i} usage: ${cpuUsage[i + 1].usage.toFixed(2)}`);
             }
             log('Memory stats', Object.entries(this.memStats));
         }
         this.area.queue_repaint();
         return true; // Return true to keep the timeout running
+    }
+
+    buildIndicatorLabel() {
+        const lines = [];
+        if (cpuUsage.length > 0) {
+            const totalUsage = cpuUsage[0].usage * 100
+            lines.push(`CPU usage: ${totalUsage.toFixed(2)}%`);
+        }
+        if (this.memStats.used) {
+            const percentUsage = (this.memStats.usage * 100).toFixed(2);
+            lines.push(`Memory usage: ${formatBytes(this.memStats.used)} / ${formatBytes(this.memStats.total)} (${percentUsage}%)`);
+        }
+        return lines.join("\n");
     }
 
     destroy() {
