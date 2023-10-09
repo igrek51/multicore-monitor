@@ -14,8 +14,6 @@ const {
     gettext: _,
 } = ExtensionUtils;
 
-const COLOR_RED = Clutter.Color.from_string('#ff0000')[1];
-
 const COLOR_BACKGROUND = Clutter.Color.from_string('#000000')[1];
 const CORE_COLORS = [
     Clutter.Color.from_string('#E03D45')[1], // grapefruit
@@ -36,8 +34,8 @@ const CORE_COLORS = [
     Clutter.Color.from_string('#33008E')[1], // indigo
 ];
 
-const CPU_STATS_INTERVAL = 1000; // in milliseconds
-const DEBUG = false;
+const CPU_STATS_INTERVAL = 1500; // in milliseconds
+const DEBUG = true;
 
 let cpuUsage = [];
 
@@ -67,7 +65,6 @@ function getCurrentCpuUsage() {
                 const guest_nice = parseInt(parts[10]);
 
                 const total = user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice;
-                const idleTime = idle + iowait;
                 const busyTime = user + nice + system + irq + softirq + steal + guest + guest_nice;
 
                 const busyDelta = busyTime - (cpuUsage[core]?.busyTime || 0);
@@ -84,9 +81,47 @@ function getCurrentCpuUsage() {
     return cpuUsage;
 }
 
+function getCurrentMemoryStats() {
+    const file = "/proc/meminfo";
+    const contents = GLib.file_get_contents(file);
+    if (!contents[0]) {
+        return {};
+    }
+    const lines = contents[1].toString().split('\n');
+    let memoryStats = {};
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const parts = line.split(/\s+/);
+        if (parts.length === 3) {
+            const key = parts[0].replace(":", "");
+            const value = parseInt(parts[1], 10);
+            memoryStats[key] = value; // in kilobytes
+        }
+    }
+
+    const used = memoryStats["MemTotal"] - memoryStats["MemAvailable"];
+    const swapUsed = memoryStats["SwapTotal"] - memoryStats["SwapFree"];
+    return {
+        total: memoryStats["MemTotal"],
+        free: memoryStats["MemFree"],
+        buffers: memoryStats["Buffers"],
+        cached: memoryStats["Cached"],
+        used: used,
+        available: memoryStats["MemAvailable"],
+        dirty: memoryStats["Dirty"],
+        writeback: memoryStats["Writeback"],
+        swapFree: memoryStats["SwapFree"],
+        swapTotal: memoryStats["SwapTotal"],
+        swapUsed: swapUsed,
+    };
+}
+
 class Extension {
     constructor(uuid) {
         this._uuid = uuid;
+        this.cpuUsage = [];
+        this.memStats = {};
         ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
     }
 
@@ -136,11 +171,12 @@ class Extension {
 
     update() {
         this.cpuUsage = getCurrentCpuUsage();
+        this.memStats = getCurrentMemoryStats();
         if (DEBUG) {
-            log("CPU Usage per Core:");
             for (let i = 0; i < this.cpuUsage.length; i++) {
-                log(`Core ${i}: ${this.cpuUsage[i].usage.toFixed(2)}`);
+                log(`CPU Core ${i} usage: ${this.cpuUsage[i].usage.toFixed(2)}`);
             }
+            log('Memory stats', Object.entries(this.memStats));
         }
         this.area.queue_repaint();
         return true; // Return true to keep the timeout running
@@ -148,7 +184,7 @@ class Extension {
 
     destroy() {
         if (this.timeout) {
-            log('Disabling periodic refresh')
+            log('Multicore: Disabling periodic refresh')
             Mainloop.source_remove(this.timeout);
             this.timeout = null;
         }
