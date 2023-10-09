@@ -34,11 +34,11 @@ const CORE_COLORS = [
     parseColor('#134D30'), // evergreen
     parseColor('#33008E'), // indigo
 ];
-const COLOR_MEM_USED = parseColor('#E3E3E3');
-const COLOR_MEM_CACHED = parseColor('#FFCB85');
+const COLOR_MEM_USED = parseColor('#F3F3F3');
+const COLOR_MEM_CACHED = parseColor('#BBBBBB');
 const COLOR_MEM_BUFFERS = parseColor('#767676');
 const COLOR_MEM_DIRTY = parseColor('#E03D45');
-const COLOR_SWAP = parseColor('#1F4130');
+const COLOR_SWAP = parseColor('#1F513080');
 
 const STAT_REFRESH_INTERVAL = 1500; // in milliseconds
 const CPU_GRAPH_WIDTH = 48;
@@ -211,18 +211,11 @@ class Extension {
     }
 
     _drawMemory(cr, xOffset, yOffset, w, h) {
-        // Swap fill
-        Clutter.cairo_set_source_color(cr, COLOR_SWAP);
-        const swapUsage = this.memStats.swapUsage || 0;
-        cr.rectangle(xOffset, yOffset + h * (1 - swapUsage), w, h * swapUsage);
-        cr.fill();
-
         const centerX = xOffset + w/2;
         const centerY = yOffset + h/2;
         const radius = h/2;
         let angle = 0;
         
-        cr.lineWidth = 3;
         const totalMem = this.memStats.total;
         Clutter.cairo_set_source_color(cr, COLOR_MEM_USED);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.used / totalMem);
@@ -232,7 +225,12 @@ class Extension {
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.buffers / totalMem);
         Clutter.cairo_set_source_color(cr, COLOR_MEM_DIRTY);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.dirtyWriteback / totalMem);
-        cr.lineWidth = 1;
+
+        // Swap fill
+        Clutter.cairo_set_source_color(cr, COLOR_SWAP);
+        const swapUsage = this.memStats.swapUsage || 0;
+        cr.rectangle(xOffset, yOffset + h * (1 - swapUsage), w, h * swapUsage);
+        cr.fill();
     }
 
     _drawMemoryPiece(cr, centerX, centerY, radius, startFraction, fraction) {
