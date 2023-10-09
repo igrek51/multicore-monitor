@@ -35,7 +35,7 @@ const CORE_COLORS = [
 ];
 
 const CPU_STATS_INTERVAL = 1500; // in milliseconds
-const DEBUG = true;
+const DEBUG = false;
 
 let cpuUsage = [];
 
