@@ -34,10 +34,15 @@ const CORE_COLORS = [
     Clutter.Color.from_string('#134D30')[1], // evergreen
     Clutter.Color.from_string('#33008E')[1], // indigo
 ];
+const COLOR_MEM_USED = Clutter.Color.from_string('#F18A00')[1];
+const COLOR_MEM_CACHED = Clutter.Color.from_string('#EAF6B7')[1];
+const COLOR_MEM_BUFFERS = Clutter.Color.from_string('#E3E3E3')[1];
+const COLOR_MEM_DIRTY = Clutter.Color.from_string('#E03D45')[1];
 
-const CPU_STATS_INTERVAL = 1500; // in milliseconds
+const STAT_REFRESH_INTERVAL = 1500; // in milliseconds
 const CPU_GRAPH_WIDTH = 48;
-const MEMORY_GRAPH_WIDTH = 48;
+const MEMORY_GRAPH_WIDTH = 40;
+const MEMORY_PIE_ORIENTATION = 0;
 const DEBUG = false;
 
 let cpuUsage = [];
@@ -119,6 +124,7 @@ function getCurrentMemoryStats() {
         available: memoryStats["MemAvailable"],
         dirty: memoryStats["Dirty"],
         writeback: memoryStats["Writeback"],
+        dirtyWriteback: memoryStats["Dirty"] + memoryStats["Writeback"],
         swapFree: memoryStats["SwapFree"],
         swapTotal: memoryStats["SwapTotal"],
         swapUsed: swapUsed,
@@ -154,7 +160,7 @@ class Extension {
             style_class: 'graph-drawing-area',
         });
         this.area.connect('repaint', this._draw.bind(this));
-        this.timeout = Mainloop.timeout_add(CPU_STATS_INTERVAL, this.periodicUpdate.bind(this));
+        this.timeout = Mainloop.timeout_add(STAT_REFRESH_INTERVAL, this.periodicUpdate.bind(this));
         
         let menuBox = new St.BoxLayout({ vertical: true });
         this.dynamicLabel = new St.Label({ text: "" });
@@ -180,7 +186,9 @@ class Extension {
         cr.fill();
 
         this._drawCpu(cr, 0, 0, CPU_GRAPH_WIDTH, h);
-        this._drawMemory(cr, CPU_GRAPH_WIDTH, 0, MEMORY_GRAPH_WIDTH, h);
+        if (this.memStats.used) {
+            this._drawMemory(cr, CPU_GRAPH_WIDTH, 0, MEMORY_GRAPH_WIDTH, h);
+        }
 
         cr.$dispose();
     }
@@ -201,13 +209,27 @@ class Extension {
         const centerX = xOffset + w/2;
         const centerY = yOffset + h/2;
         const radius = h/2;
-        const startAngle = 0;
-        const endAngle = 3.14;
-        cr.lineWidth = 1;
+        let angle = 0;
+        
+        const totalMem = this.memStats.total;
+        Clutter.cairo_set_source_color(cr, COLOR_MEM_USED);
+        angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.used / totalMem);
+        Clutter.cairo_set_source_color(cr, COLOR_MEM_CACHED);
+        angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.cached / totalMem);
+        Clutter.cairo_set_source_color(cr, COLOR_MEM_BUFFERS);
+        angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.buffers / totalMem);
+        Clutter.cairo_set_source_color(cr, COLOR_MEM_DIRTY);
+        angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.dirtyWriteback / totalMem);
+    }
+
+    _drawMemoryPiece(cr, centerX, centerY, radius, startFraction, fraction) {
+        const startAngle = (startFraction + MEMORY_PIE_ORIENTATION) * 2 * PI;
+        const endAngle = startAngle + fraction * 2 * PI;
         cr.moveTo(centerX, centerY);
         cr.arc(centerX, centerY, radius, startAngle, endAngle);
         cr.lineTo(centerX, centerY);
         cr.fill();
+        return startFraction + fraction;
     }
 
     periodicUpdate() {
@@ -232,7 +254,12 @@ class Extension {
         }
         if (this.memStats.used) {
             const percentUsage = (this.memStats.usage * 100).toFixed(2);
+            const swapUsage = (this.memStats.swapUsage * 100).toFixed(2);
             lines.push(`Memory usage: ${formatBytes(this.memStats.used)} / ${formatBytes(this.memStats.total)} (${percentUsage}%)`);
+            lines.push(`Cached: ${formatBytes(this.memStats.cached)}`);
+            lines.push(`Buffers: ${formatBytes(this.memStats.buffers)}`);
+            lines.push(`Dirty / Writeback: ${formatBytes(this.memStats.dirtyWriteback)}`);
+            lines.push(`Swap: ${formatBytes(this.memStats.swapUsed)} / ${formatBytes(this.memStats.swapTotal)} (${swapUsage}%)`);
         }
         return lines.join("\n");
     }
