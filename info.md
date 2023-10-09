@@ -28,3 +28,7 @@ gnome-extensions enable 'multicore-system-monitor@igrek.dev'
 # Gnome shell output
 sudo journalctl -f -o cat /usr/bin/gnome-shell
 sudo journalctl -o cat /usr/bin/gnome-shell
+
+# Docs
+GJS
+St: https://gjs-docs.gnome.org/st13~13/

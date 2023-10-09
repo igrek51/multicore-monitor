@@ -66,34 +66,21 @@ class Extension {
             height: 64,
             style_class: 'graph-drawing-area',
         });
-
-        // this.area.set_width(64);
-        // this.area.set_height(64);
         this.area.connect('repaint', this._draw.bind(this));
-
-        this._indicator.add_child(this.area);
-
         this.timeout = Mainloop.timeout_add(1000, this.update.bind(this));
-
-        // let item = new PopupMenu.PopupMenuItem(_('Notify me again'));
-        // item.connect('activate', () => {
-        //     log('This is a regular log message.');
-        //     Main.notify(_('notification'));
-        // });
-        // this._indicator.menu.addMenuItem(item);
-
-        // let item2 = new PopupMenu.PopupMenuItem(_('Prefs'));
-        // item2.connect('activate', () => {
-        //     ExtensionUtils.openPrefs()
-        // });
-        // this._indicator.menu.addMenuItem(item2);
-
+        
+        let menuItem = new PopupMenu.PopupMenuItem(_('Preferences'));
+        menuItem.connect('activate', () => {
+            ExtensionUtils.openPrefs()
+        });
+        this._indicator.menu.addMenuItem(menuItem);
+        
+        this._indicator.add_child(this.area);
         Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
     }
 
     _draw() {
         let [width, height] = this.area.get_surface_size();
-        log('size', width, height);
         let cr = this.area.get_context();
 
         Clutter.cairo_set_source_color(cr, COLOR_RED);
