@@ -4,6 +4,7 @@ const { GObject, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
+const Mainloop = imports.mainloop;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Clutter = imports.gi.Clutter;
@@ -13,7 +14,10 @@ const {
     gettext: _,
 } = ExtensionUtils;
 
-const COLOR_1 = Clutter.Color.from_string('#ff0000')[1];
+const COLOR_RED = Clutter.Color.from_string('#ff0000')[1];
+const COLOR_GREEN = Clutter.Color.from_string('#00ff00')[1];
+const COLOR_BLUE = Clutter.Color.from_string('#0000ff')[1];
+const COLOR_YELLOW = Clutter.Color.from_string('#ffff00')[1];
 
 // const CpuMonitor = new Lang.Class({
 //     Name: 'CpuMonitor',
@@ -58,16 +62,18 @@ class Extension {
         
         this.area = new St.DrawingArea({
             reactive: false,
+            width: 64,
+            height: 64,
             style_class: 'graph-drawing-area',
         });
 
-        this.area.set_width(100);
-        this.area.set_height(100);
+        // this.area.set_width(64);
+        // this.area.set_height(64);
         this.area.connect('repaint', this._draw.bind(this));
 
         this._indicator.add_child(this.area);
 
-
+        this.timeout = Mainloop.timeout_add(1000, this.update.bind(this));
 
         // let item = new PopupMenu.PopupMenuItem(_('Notify me again'));
         // item.connect('activate', () => {
@@ -90,15 +96,28 @@ class Extension {
         log('size', width, height);
         let cr = this.area.get_context();
 
-        log(Clutter.Color.from_string('#ff0000')[1].constructor.name);
-        Clutter.cairo_set_source_color(cr, COLOR_1);
+        Clutter.cairo_set_source_color(cr, COLOR_RED);
         cr.rectangle(0, 0, width, height);
         cr.fill();
 
         cr.$dispose();
     }
 
+    update() {
+        this.area.queue_repaint();
+        return true; // Return true to keep the timeout running
+    }
+
+    destroy() {
+        if (this.timeout) {
+            log('Disabling periodic refresh')
+            Mainloop.source_remove(this.timeout);
+            this.timeout = null;
+        }
+    }
+
     disable() {
+        this.destroy()
         if (this._indicator) {
             this._indicator.destroy();
             this._indicator = null;
