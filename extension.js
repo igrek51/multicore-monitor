@@ -15,40 +15,74 @@ const {
 } = ExtensionUtils;
 
 const COLOR_RED = Clutter.Color.from_string('#ff0000')[1];
-const COLOR_GREEN = Clutter.Color.from_string('#00ff00')[1];
-const COLOR_BLUE = Clutter.Color.from_string('#0000ff')[1];
-const COLOR_YELLOW = Clutter.Color.from_string('#ffff00')[1];
 
-// const CpuMonitor = new Lang.Class({
-//     Name: 'CpuMonitor',
-//     _init: function() {
-//         this.actor = new St.BoxLayout({ style_class: 'cpu-monitor-box' });
-//         this.actor.set_vertical(true);
-//         this.cpuUsage = [];
-//         this.numCores = GLib.get_num_processors();
-//         for (let i = 0; i < this.numCores; i++) {
-//             let bar = new St.Bin({
-//                 style_class: 'cpu-monitor-bar',
-//                 reactive: false,
-//                 can_focus: false,
-//                 x_fill: true,
-//                 y_fill: true,
-//                 track_hover: false,
-//             });
-//             this.cpuUsage[i] = bar;
-//             this.actor.add_child(bar);
-//         }
-//         this.updateCpuUsage();
-//     },
-//     updateCpuUsage: function() {
-//         let [, usage] = GLib.get_cpu_usage();
-//         for (let i = 0; i < this.numCores; i++) {
-//             this.cpuUsage[i].set_height(usage[i] / 100 * Main.panel.height);
-//         }
-//         timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, Lang.bind(this, this.updateCpuUsage));
-//     },
+const COLOR_BACKGROUND = Clutter.Color.from_string('#000000')[1];
+const CORE_COLORS = [
+    Clutter.Color.from_string('#E03D45')[1], // grapefruit
+    Clutter.Color.from_string('#F18A00')[1], // tangerine
+    Clutter.Color.from_string('#F3FF72')[1], // pastel yellow
+    Clutter.Color.from_string('#EAF6B7')[1], // cream
+    Clutter.Color.from_string('#00AA1F')[1], // green
+    Clutter.Color.from_string('#1564C0')[1], // cornflower blue
+    Clutter.Color.from_string('#9C42BA')[1], // purply
+    Clutter.Color.from_string('#F85C51')[1], // coral
+    Clutter.Color.from_string('#D3E379')[1], // greenish beige
+    Clutter.Color.from_string('#E3E3E3')[1], // pale grey
+    Clutter.Color.from_string('#FF8BA0')[1], // rose pink
+    Clutter.Color.from_string('#54BD6C')[1], // dark mint
+    Clutter.Color.from_string('#5BD8D2')[1], // topaz
+    Clutter.Color.from_string('#F2D868')[1], // pale gold
+    Clutter.Color.from_string('#134D30')[1], // evergreen
+    Clutter.Color.from_string('#33008E')[1], // indigo
+];
 
-// this.drawable = new St.DrawingArea({style_class: 'drawable'});
+const CPU_STATS_INTERVAL = 1000; // in milliseconds
+const DEBUG = false;
+
+let cpuUsage = [];
+
+function getCurrentCpuUsage() {
+    const file = "/proc/stat";
+    const contents = GLib.file_get_contents(file);
+    if (!contents[0]) {
+        return [];
+    }
+    const lines = contents[1].toString().split('\n');
+    // Skip first line, which represents the total CPU usage
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const core = i - 1;
+        if (line.startsWith("cpu")) {
+            const parts = line.split(/\s+/);
+            if (parts.length >= 11) {
+                const user = parseInt(parts[1]);
+                const nice = parseInt(parts[2]);
+                const system = parseInt(parts[3]);
+                const idle = parseInt(parts[4]);
+                const iowait = parseInt(parts[5]);
+                const irq = parseInt(parts[6]);
+                const softirq = parseInt(parts[7]);
+                const steal = parseInt(parts[8]);
+                const guest = parseInt(parts[9]);
+                const guest_nice = parseInt(parts[10]);
+
+                const total = user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice;
+                const idleTime = idle + iowait;
+                const busyTime = user + nice + system + irq + softirq + steal + guest + guest_nice;
+
+                const busyDelta = busyTime - (cpuUsage[core]?.busyTime || 0);
+                const totalDelta = total - (cpuUsage[core]?.total || 0);
+                const usage = totalDelta > 0 ? (busyDelta / totalDelta) : 0;
+                cpuUsage[core] = {
+                    busyTime: busyTime,
+                    total: total,
+                    usage: usage,
+                };
+            }
+        }
+    }
+    return cpuUsage;
+}
 
 class Extension {
     constructor(uuid) {
@@ -67,7 +101,7 @@ class Extension {
             style_class: 'graph-drawing-area',
         });
         this.area.connect('repaint', this._draw.bind(this));
-        this.timeout = Mainloop.timeout_add(1000, this.update.bind(this));
+        this.timeout = Mainloop.timeout_add(CPU_STATS_INTERVAL, this.update.bind(this));
         
         let menuItem = new PopupMenu.PopupMenuItem(_('Preferences'));
         menuItem.connect('activate', () => {
@@ -80,17 +114,34 @@ class Extension {
     }
 
     _draw() {
-        let [width, height] = this.area.get_surface_size();
+        let [w, h] = this.area.get_surface_size();
         let cr = this.area.get_context();
 
-        Clutter.cairo_set_source_color(cr, COLOR_RED);
-        cr.rectangle(0, 0, width, height);
+        Clutter.cairo_set_source_color(cr, COLOR_BACKGROUND);
+        cr.rectangle(0, 0, w, h);
         cr.fill();
+
+        const cores = this.cpuUsage.length;
+        const binW = w / cores;
+        for (let core = 0; core < cores; core++) {
+            const usage = this.cpuUsage[core].usage;
+            const colorIndex = core % CORE_COLORS.length;
+            Clutter.cairo_set_source_color(cr, CORE_COLORS[colorIndex]);
+            cr.rectangle(core * binW, h * (1 - usage), binW, h * usage);
+            cr.fill();
+        }
 
         cr.$dispose();
     }
 
     update() {
+        this.cpuUsage = getCurrentCpuUsage();
+        if (DEBUG) {
+            log("CPU Usage per Core:");
+            for (let i = 0; i < this.cpuUsage.length; i++) {
+                log(`Core ${i}: ${this.cpuUsage[i].usage.toFixed(2)}`);
+            }
+        }
         this.area.queue_repaint();
         return true; // Return true to keep the timeout running
     }
