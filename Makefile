@@ -14,3 +14,6 @@ nested-wayland:
 	dbus-run-session -- gnome-shell --nested --wayland
 
 run: copy-data nested-wayland
+
+pack:
+	gnome-extensions pack
