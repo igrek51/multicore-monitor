@@ -18,26 +18,26 @@ const PI = 3.141592654;
 const COLOR_BACKGROUND = parseColor('#000000');
 const CORE_COLORS = [
     parseColor('#E03D45'), // grapefruit
+    parseColor('#F85C51'), // coral
     parseColor('#F18A00'), // tangerine
+    parseColor('#FF8BA0'), // rose pink
+    parseColor('#F2D868'), // pale gold
     parseColor('#F3FF72'), // pastel yellow
     parseColor('#EAF6B7'), // cream
-    parseColor('#00AA1F'), // green
-    parseColor('#1564C0'), // cornflower blue
-    parseColor('#9C42BA'), // purply
-    parseColor('#F85C51'), // coral
-    parseColor('#D3E379'), // greenish beige
     parseColor('#E3E3E3'), // pale grey
-    parseColor('#FF8BA0'), // rose pink
     parseColor('#54BD6C'), // dark mint
+    parseColor('#00AA1F'), // green
+    parseColor('#17703A'), // jungle green
+    parseColor('#1564C0'), // cornflower blue
     parseColor('#5BD8D2'), // topaz
-    parseColor('#F2D868'), // pale gold
-    parseColor('#134D30'), // evergreen
-    parseColor('#33008E'), // indigo
+    parseColor('#7990E3'), // periwinkle blue
+    parseColor('#4C00D3'), // purply blue
+    parseColor('#9C42BA'), // purply
 ];
 const COLOR_MEM_USED = parseColor('#F3F3F3');
 const COLOR_MEM_CACHED = parseColor('#BBBBBB');
 const COLOR_MEM_BUFFERS = parseColor('#767676');
-const COLOR_MEM_DIRTY = parseColor('#E03D45');
+const COLOR_MEM_DIRTY = parseColor('#F18A00');
 const COLOR_SWAP = parseColor('#1F613060');
 
 const STAT_REFRESH_INTERVAL = 2000; // in milliseconds
@@ -45,6 +45,7 @@ const CPU_GRAPH_WIDTH = 48;
 const MEMORY_GRAPH_WIDTH = 40;
 const MEMORY_PIE_ORIENTATION = 0;
 const DEBUG = false;
+const DEBUG_RANDOM = false;
 
 let cpuUsage = []; // first line represents the total CPU usage, next - consecutive cores
 
@@ -59,7 +60,6 @@ function getCurrentCpuUsage() {
     // first line represents the total CPU usage
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        const core = i - 1;
         if (line.startsWith("cpu")) {
             const parts = line.split(/\s+/);
             if (parts.length >= 11) {
@@ -77,10 +77,10 @@ function getCurrentCpuUsage() {
                 const total = user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice;
                 const busyTime = user + nice + system + irq + softirq + steal + guest + guest_nice;
 
-                const busyDelta = busyTime - (cpuUsage[core]?.busyTime || 0);
-                const totalDelta = total - (cpuUsage[core]?.total || 0);
+                const busyDelta = busyTime - (cpuUsage[i]?.busyTime || 0);
+                const totalDelta = total - (cpuUsage[i]?.total || 0);
                 const usage = totalDelta > 0 ? (busyDelta / totalDelta) : 0;
-                cpuUsage[core] = {
+                cpuUsage[i] = {
                     busyTime: busyTime,
                     total: total,
                     usage: usage,
@@ -202,7 +202,7 @@ class Extension {
         const cores = cpuUsage.length - 1;
         const binW = w / cores;
         for (let core = 0; core < cores; core++) {
-            const usage = cpuUsage[core + 1].usage;
+            const usage = DEBUG_RANDOM ? Math.random() : cpuUsage[core + 1].usage;
             const colorIndex = core % CORE_COLORS.length;
             Clutter.cairo_set_source_color(cr, CORE_COLORS[colorIndex]);
             cr.rectangle(xOffset + core * binW, yOffset + h * (1 - usage), binW, h * usage);
