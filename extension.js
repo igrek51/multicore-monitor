@@ -1,5 +1,3 @@
-const GETTEXT_DOMAIN = 'my-multicore-indicator-extension';
-
 const { GObject, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
@@ -14,6 +12,7 @@ const {
     gettext: _,
 } = ExtensionUtils;
 const PI = 3.141592654;
+const GETTEXT_DOMAIN = 'multicore-system-monitor';
 
 const COLOR_BACKGROUND = parseColor('#000000');
 const CORE_COLORS = [
@@ -44,6 +43,7 @@ const STAT_REFRESH_INTERVAL = 2000; // in milliseconds
 const CPU_GRAPH_WIDTH = 48;
 const MEMORY_GRAPH_WIDTH = 40;
 const MEMORY_PIE_ORIENTATION = 0;
+const PANEL_POSITION = 900; // 0 - leftmost
 const DEBUG = false;
 const DEBUG_RANDOM = false;
 
@@ -179,7 +179,7 @@ class Extension {
         this._indicator.menu.addMenuItem(menuItem);
         
         this._indicator.add_child(this.area);
-        Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator);
+        Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator, PANEL_POSITION, Main.panel._rightBox);
     }
 
     _draw() {
@@ -272,7 +272,7 @@ class Extension {
             const percentUsage = (this.memStats.usage * 100).toFixed(2);
             const swapUsage = (this.memStats.swapUsage * 100).toFixed(2);
             lines.push(`Memory usage: ${formatBytes(this.memStats.used)} / ${formatBytes(this.memStats.total)} (${percentUsage}%)`);
-            lines.push(`Cached: ${formatBytes(this.memStats.cached)}`);
+            lines.push(`Cache: ${formatBytes(this.memStats.cached)}`);
             lines.push(`Buffers: ${formatBytes(this.memStats.buffers)}`);
             lines.push(`Dirty / Writeback: ${formatBytes(this.memStats.dirtyWriteback)}`);
             lines.push(`Swap: ${formatBytes(this.memStats.swapUsed)} / ${formatBytes(this.memStats.swapTotal)} (${swapUsage}%)`);
