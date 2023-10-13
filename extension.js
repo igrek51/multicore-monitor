@@ -294,6 +294,8 @@ class Extension {
             this._indicator.destroy();
             this._indicator = null;
         }
+        this.memStats = {};
+        cpuUsage = [];
     }
 }
 
