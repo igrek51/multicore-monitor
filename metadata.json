@@ -4,5 +4,6 @@
   "uuid": "multicore-system-monitor@igrek.dev",
   "shell-version": [
     "44"
-  ]
+  ],
+  "url": "https://github.com/igrek51/multicore-monitor"
 }
