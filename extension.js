@@ -155,7 +155,7 @@ class Extension {
     }
 
     enable() {
-        log('Enabling multicore system monitor.');
+        console.log('Enabling multicore system monitor.');
         this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
         
         this.area = new St.DrawingArea({
@@ -254,9 +254,9 @@ class Extension {
         this.dynamicLabel.text = this.buildIndicatorLabel();
         if (DEBUG) {
             for (let i = 0; i < cpuUsage.length - 1; i++) {
-                log(`CPU Core ${i} usage: ${cpuUsage[i + 1].usage.toFixed(2)}`);
+                console.log(`CPU Core ${i} usage: ${cpuUsage[i + 1].usage.toFixed(2)}`);
             }
-            log('Memory stats', Object.entries(this.memStats));
+            console.log('Memory stats', Object.entries(this.memStats));
         }
         this.area.queue_repaint();
         return true; // Return true to keep the timeout running
@@ -282,9 +282,9 @@ class Extension {
 
     destroy() {
         if (this.timeout) {
-            log('Multicore: Disabling periodic refresh')
             Mainloop.source_remove(this.timeout);
             this.timeout = null;
+            console.log('Multicore: Periodic refresh disabled')
         }
     }
 
