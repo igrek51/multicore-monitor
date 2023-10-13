@@ -43,7 +43,7 @@ const STAT_REFRESH_INTERVAL = 2000; // in milliseconds
 const CPU_GRAPH_WIDTH = 48;
 const MEMORY_GRAPH_WIDTH = 40;
 const MEMORY_PIE_ORIENTATION = 0;
-const PANEL_POSITION = 900; // 0 - leftmost
+const PANEL_POSITION = 10; // higher - rightmost
 const DEBUG = false;
 const DEBUG_RANDOM = false;
 
@@ -294,8 +294,8 @@ class Extension {
             this._indicator.destroy();
             this._indicator = null;
         }
-        this.memStats = {};
         cpuUsage = [];
+        this.memStats = {};
     }
 }
 
