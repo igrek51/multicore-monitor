@@ -11,6 +11,9 @@ Show consumption of each CPU core and memory.
 - Show **swap** usage (green fill of memory pie).
 - Click on the widget to see detailed stats.
 
+## Installation
+Install through Gnome Shell Extensions site: [multicore-system-monitor@igrek.dev](https://extensions.gnome.org/extension/6364/multicore-system-monitor/)
+
 ## References
 Inspired by:
 
