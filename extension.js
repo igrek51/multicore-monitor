@@ -1,18 +1,15 @@
-const { GObject, St } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Main = imports.ui.main;
+import St from 'gi://St';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
 const Mainloop = imports.mainloop;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Clutter = imports.gi.Clutter;
-const GLib = imports.gi.GLib;
 
-const {
-    gettext: _,
-} = ExtensionUtils;
 const PI = 3.141592654;
-const GETTEXT_DOMAIN = 'multicore-system-monitor';
+const METADATA_NAME = 'multicore-system-monitor';
+const METADATA_UUID = 'multicore-system-monitor@igrek.dev';
 
 const COLOR_BACKGROUND = parseColor('#000000');
 const CORE_COLORS = [
@@ -147,16 +144,15 @@ function parseColor(hashString) {
     return Clutter.Color.from_string(hashString)[1];
 }
 
-class Extension {
-    constructor(uuid) {
-        this._uuid = uuid;
-        this.memStats = {};
-        ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
+export default class MyExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
     }
 
     enable() {
         console.log('Enabling multicore system monitor.');
-        this._indicator = new PanelMenu.Button(0.0, Me.metadata.name, false);
+        this.memStats = {};
+        this._indicator = new PanelMenu.Button(0.0, METADATA_NAME, false);
         
         this.area = new St.DrawingArea({
             reactive: false,
@@ -179,7 +175,7 @@ class Extension {
         this._indicator.menu.addMenuItem(menuItem);
         
         this._indicator.add_child(this.area);
-        Main.panel.addToStatusArea(Me.metadata.uuid, this._indicator, PANEL_POSITION, Main.panel._rightBox);
+        Main.panel.addToStatusArea(METADATA_UUID, this._indicator, PANEL_POSITION, Main.panel._rightBox);
     }
 
     _draw() {
@@ -300,5 +296,5 @@ class Extension {
 }
 
 function init(meta) {
-    return new Extension(meta.uuid);
+    return new MyExtension(meta.uuid);
 }
