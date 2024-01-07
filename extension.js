@@ -5,7 +5,6 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
-const Mainloop = imports.mainloop;
 
 const PI = 3.141592654;
 const METADATA_NAME = 'multicore-system-monitor';
@@ -36,7 +35,7 @@ const COLOR_MEM_BUFFERS = parseColor('#767676');
 const COLOR_MEM_DIRTY = parseColor('#F18A00');
 const COLOR_SWAP = parseColor('#1F613060');
 
-const STAT_REFRESH_INTERVAL = 2000; // in milliseconds
+const STAT_REFRESH_INTERVAL = 2; // in seconds
 const CPU_GRAPH_WIDTH = 48;
 const MEMORY_GRAPH_WIDTH = 40;
 const MEMORY_PIE_ORIENTATION = 0;
@@ -161,7 +160,11 @@ export default class MyExtension extends Extension {
             style_class: 'graph-drawing-area',
         });
         this.area.connect('repaint', this._draw.bind(this));
-        this.timeout = Mainloop.timeout_add(STAT_REFRESH_INTERVAL, this.periodicUpdate.bind(this));
+        this.timeout = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT,
+            STAT_REFRESH_INTERVAL,
+            this.periodicUpdate.bind(this)
+        );
         
         let menuBox = new St.BoxLayout({ vertical: true });
         this.dynamicLabel = new St.Label({ text: "" });
@@ -278,7 +281,7 @@ export default class MyExtension extends Extension {
 
     destroy() {
         if (this.timeout) {
-            Mainloop.source_remove(this.timeout);
+            GLib.source_remove(this.timeout);
             this.timeout = null;
             console.log('Multicore: Periodic refresh disabled')
         }
@@ -293,8 +296,4 @@ export default class MyExtension extends Extension {
         cpuUsage = [];
         this.memStats = {};
     }
-}
-
-function init(meta) {
-    return new MyExtension(meta.uuid);
 }
