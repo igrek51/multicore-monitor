@@ -1,9 +1,9 @@
 {
-  "name": "multicore-system-monitor",
+  "name": "multicore-system-monitorls ^",
   "description": "Show consumption of each CPU core and memory",
-  "uuid": "multicore-system-monitor@igrek.dev",
+  "uuid": "multicore-system-monitor@ihiroky.github.com",
   "shell-version": [
-    "45"
+    "46"
   ],
-  "url": "https://github.com/igrek51/multicore-monitor"
+  "url": "https://github.com/ihiroky/gnome-shell-extension-multicore-monitor"
 }

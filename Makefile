@@ -1,11 +1,16 @@
-copy-data:
-	cp extension.js ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
-	cp metadata.json ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
-	cp stylesheet.css ~/.local/share/gnome-shell/extensions/multicore-system-monitor@igrek.dev/
+UUID = multicore-system-monitor@ihiroky.github.com
+BUNDLE = $(UUID).shell-extension.zip
+EXT_DIR = ~/.local/share/gnome-shell/extensions
+
+copy-data: extension.js metadata.json stylesheet.css
+	mkdir -p          $(EXT_DIR)
+	cp extension.js   $(EXT_DIR)
+	cp metadata.json  $(EXT_DIR)
+	cp stylesheet.css $(EXT_DIR)
 
 reenable:
-	gnome-extensions disable 'multicore-system-monitor@igrek.dev'
-	gnome-extensions enable 'multicore-system-monitor@igrek.dev'
+	gnome-extensions disable '$(UUID)'
+	gnome-extensions enable  '$(UUID)'
 
 update: copy-data reenable
 
@@ -17,5 +22,8 @@ nested-wayland:
 
 run: copy-data nested-wayland
 
-pack:
+$(BUNDLE): copy-data
 	gnome-extensions pack --force
+
+install: $(BUNDLE)
+	gnome-extensions install --force $(BUNDLE)
