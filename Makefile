@@ -7,8 +7,8 @@ copy-data:
 	cp stylesheet.css $(EXT_DIR)/multicore-system-monitor@igrek.dev/
 
 reenable:
-	gnome-extensions disable '$(UUID)'
-	gnome-extensions enable '$(UUID)'
+	gnome-extensions disable '${UUID}'
+	gnome-extensions enable '${UUID}'
 
 update: copy-data reenable
 
@@ -24,7 +24,7 @@ pack:
 	gnome-extensions pack --force
 
 install: pack
-	gnome-extensions install --force $(UUID).shell-extension.zip
+	gnome-extensions install --force ${UUID}.shell-extension.zip
 
 run-docker-xclock:
 	xhost '+Local:*'
@@ -43,4 +43,15 @@ vm:
 	(cd test && vagrant up)
 # vagrant: vagrant
 # sudo apt update
-# sudo apt install gnome-shell gdm3
+# sudo apt install gnome-shell gdm3 gnome-terminal gnome-shell-extensions gnome-shell-extension-manager gnome-tweaks nautilus
+
+vm-ssh:
+	(cd test && vagrant ssh)
+
+vm-down:
+	(cd test && vagrant destroy)
+
+vm-install: pack
+	cp ${UUID}.shell-extension.zip test/
+	cd test && vagrant ssh -c "gnome-extensions install --force /vagrant/${UUID}.shell-extension.zip"
+	cd test && vagrant ssh -c "gnome-extensions enable '${UUID}'"

@@ -168,12 +168,12 @@ export default class MyExtension extends Extension {
         
         let menuBox = new St.BoxLayout({ vertical: true });
         this.dynamicLabel = new St.Label({ text: "" });
-        menuBox.add(this.dynamicLabel);
+        menuBox.add_child(this.dynamicLabel);
         let menuItem = new PopupMenu.PopupBaseMenuItem({
             reactive: false,
             can_focus: false,
         });
-        menuItem.actor.add_actor(menuBox);
+        menuItem.actor.add_child(menuBox);
         
         this._indicator.menu.addMenuItem(menuItem);
         
@@ -185,7 +185,7 @@ export default class MyExtension extends Extension {
         let [totalWidth, h] = this.area.get_surface_size();
         let cr = this.area.get_context();
         // clear background
-        Clutter.cairo_set_source_color(cr, COLOR_BACKGROUND);
+        cr.setSourceColor(COLOR_BACKGROUND);
         cr.rectangle(0, 0, totalWidth, h);
         cr.fill();
 
@@ -203,7 +203,7 @@ export default class MyExtension extends Extension {
         for (let core = 0; core < cores; core++) {
             const usage = DEBUG_RANDOM ? Math.random() : cpuUsage[core + 1].usage;
             const colorIndex = core % CORE_COLORS.length;
-            Clutter.cairo_set_source_color(cr, CORE_COLORS[colorIndex]);
+            cr.setSourceColor(CORE_COLORS[colorIndex]);
             cr.rectangle(xOffset + core * binW, yOffset + h * (1 - usage), binW, h * usage);
             cr.fill();
         }
@@ -218,13 +218,13 @@ export default class MyExtension extends Extension {
         let angle = 0;
         
         const totalMem = this.memStats.total;
-        Clutter.cairo_set_source_color(cr, COLOR_MEM_USED);
+        cr.setSourceColor(COLOR_MEM_USED);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.used / totalMem);
-        Clutter.cairo_set_source_color(cr, COLOR_MEM_CACHED);
+        cr.setSourceColor(COLOR_MEM_CACHED);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.cached / totalMem);
-        Clutter.cairo_set_source_color(cr, COLOR_MEM_BUFFERS);
+        cr.setSourceColor(COLOR_MEM_BUFFERS);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.buffers / totalMem);
-        Clutter.cairo_set_source_color(cr, COLOR_MEM_DIRTY);
+        cr.setSourceColor(COLOR_MEM_DIRTY);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.dirtyWriteback / totalMem);
 
         this._drawMemorySwap(cr, xOffset, yOffset, w, h); // Swap fill
@@ -241,7 +241,7 @@ export default class MyExtension extends Extension {
     }
 
     _drawMemorySwap(cr, xOffset, yOffset, w, h) {
-        Clutter.cairo_set_source_color(cr, COLOR_SWAP);
+        cr.setSourceColor(COLOR_SWAP);
         const swapUsage = this.memStats.swapUsage || 0;
         cr.rectangle(xOffset, yOffset + h * (1 - swapUsage), w, h * swapUsage);
         cr.fill();
