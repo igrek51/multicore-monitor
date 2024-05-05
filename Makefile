@@ -28,7 +28,9 @@ install: pack
 
 run-docker-xclock:
 	xhost '+Local:*'
-	docker buildx build -f docker/Dockerfile -t mutlicore-gnome-shell:latest .
+	docker buildx build \
+		--build-arg UID=$(shell id -u) --build-arg GID=$(shell id -g) \
+		-f docker/Dockerfile -t mutlicore-gnome-shell:latest .
 	docker run --rm -it \
 		--env="DISPLAY" \
 		--net=host \
@@ -37,20 +39,8 @@ run-docker-xclock:
 		mutlicore-gnome-shell:latest \
 		xclock
 
-run-docker:
-	xhost '+Local:*'
-	docker buildx build \
-		--build-arg UID=$(shell id -u) --build-arg GID=$(shell id -g) \
-		-f docker/Dockerfile -t mutlicore-gnome-shell:latest .
-	docker run --rm -it \
-		--env="DISPLAY=:0" \
-		--env="XDG_RUNTIME_DIR=/run/user/1001" \
-		--privileged \
-		--net=host \
-		--volume /tmp/.X11-unix:/tmp/.X11-unix \
-		--volume="${HOME}/.Xauthority:/root/.Xauthority:rw" \
-		--volume="/run/user/1001:/run/user/1001" \
-		--user=1001:1001 \
-		mutlicore-gnome-shell:latest \
-		bash
-		# dbus-run-session -- gnome-shell --nested --wayland
+vm:
+	(cd test && vagrant up)
+# vagrant: vagrant
+# sudo apt update
+# sudo apt install gnome-shell gdm3
