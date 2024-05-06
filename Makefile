@@ -43,7 +43,7 @@ vm:
 	(cd test && vagrant up)
 # vagrant: vagrant
 # sudo apt update
-# sudo apt install gnome-shell gdm3 gnome-terminal gnome-shell-extensions gnome-shell-extension-manager gnome-tweaks nautilus
+# sudo apt install gnome-shell gdm3 gnome-terminal gnome-shell-extensions gnome-shell-extension-manager gnome-tweaks nautilus xorg
 
 vm-ssh:
 	(cd test && vagrant ssh)
