@@ -15,7 +15,7 @@ update: copy-data reenable
 logs:
 	sudo journalctl -f -o cat /usr/bin/gnome-shell
 
-nested-wayland:
+nested-wayland: copy-data
 	dbus-run-session -- gnome-shell --nested --wayland
 
 run: copy-data nested-wayland

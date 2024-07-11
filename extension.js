@@ -37,7 +37,7 @@ const COLOR_SWAP = parseColor('#1F613060');
 
 const STAT_REFRESH_INTERVAL = 2; // in seconds
 const CPU_GRAPH_WIDTH = 48;
-const MEMORY_GRAPH_WIDTH = 40;
+const MEMORY_GRAPH_WIDTH = 44;
 const MEMORY_PIE_ORIENTATION = 0;
 const PANEL_POSITION = 10; // higher - rightmost
 const DEBUG = false;
@@ -214,7 +214,8 @@ export default class MyExtension extends Extension {
 
         const centerX = xOffset + w/2;
         const centerY = yOffset + h/2;
-        const radius = h/2;
+        const smallDim = Math.min(w, h);
+        const radius = smallDim/2;
         let angle = 0;
         
         const totalMem = this.memStats.total;
@@ -233,6 +234,7 @@ export default class MyExtension extends Extension {
     _drawMemoryPiece(cr, centerX, centerY, radius, startFraction, fraction) {
         const startAngle = (startFraction + MEMORY_PIE_ORIENTATION) * 2 * PI;
         const endAngle = startAngle + fraction * 2 * PI;
+        cr.setLineWidth(1);
         cr.moveTo(centerX, centerY);
         cr.arc(centerX, centerY, radius, startAngle, endAngle);
         cr.lineTo(centerX, centerY);
