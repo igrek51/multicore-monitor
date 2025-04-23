@@ -1,9 +1,9 @@
 {
-  "name": "multicore-system-monitor",
+  "name": "Multicore System Monitor",
   "description": "Show consumption of each CPU core and memory",
   "uuid": "multicore-system-monitor@igrek.dev",
   "shell-version": [
-    "46"
+    "46", "47"
   ],
   "url": "https://github.com/igrek51/multicore-monitor"
 }

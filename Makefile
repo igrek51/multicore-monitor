@@ -6,6 +6,9 @@ copy-data:
 	cp metadata.json $(EXT_DIR)/multicore-system-monitor@igrek.dev/
 	cp stylesheet.css $(EXT_DIR)/multicore-system-monitor@igrek.dev/
 
+enable:
+	gnome-extensions enable '${UUID}'
+
 reenable:
 	gnome-extensions disable '${UUID}'
 	gnome-extensions enable '${UUID}'
@@ -14,6 +17,9 @@ update: copy-data reenable
 
 logs:
 	sudo journalctl -f -o cat /usr/bin/gnome-shell
+
+logs-by-id:
+	sudo journalctl -e -t gnome-shell
 
 nested-wayland: copy-data
 	dbus-run-session -- gnome-shell --nested --wayland

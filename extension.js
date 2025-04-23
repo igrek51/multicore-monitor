@@ -3,7 +3,7 @@ import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/ex
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import Clutter from 'gi://Clutter';
+import Cogl from 'gi://Cogl';
 import GLib from 'gi://GLib';
 
 const PI = 3.141592654;
@@ -140,7 +140,7 @@ function formatBytes(kbs) {
 }
 
 function parseColor(hashString) {
-    return Clutter.Color.from_string(hashString)[1];
+    return Cogl.Color.from_string(hashString)[1];
 }
 
 export default class MyExtension extends Extension {
