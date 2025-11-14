@@ -3,7 +3,9 @@
   "description": "Show consumption of each CPU core and memory",
   "uuid": "multicore-system-monitor@igrek.dev",
   "shell-version": [
-    "47"
+    "47",
+    "48",
+    "49"
   ],
   "url": "https://github.com/igrek51/multicore-monitor"
 }

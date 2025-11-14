@@ -61,3 +61,7 @@ vm-install: pack
 	cp ${UUID}.shell-extension.zip test/
 	cd test && vagrant ssh -c "gnome-extensions install --force /vagrant/${UUID}.shell-extension.zip"
 	cd test && vagrant ssh -c "gnome-extensions enable '${UUID}'"
+
+clean:
+	gnome-extensions disable '${UUID}'
+	rm -rf ~/.local/share/gnome-shell/extensions/${UUID}

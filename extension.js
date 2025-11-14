@@ -3,7 +3,6 @@ import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/ex
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import Cogl from 'gi://Cogl';
 import GLib from 'gi://GLib';
 
 const PI = 3.141592654;
@@ -140,7 +139,22 @@ function formatBytes(kbs) {
 }
 
 function parseColor(hashString) {
-    return Cogl.Color.from_string(hashString)[1];
+    const hex = hashString.replace('#', '');
+    let r, g, b, a = 1.0;
+    if (hex.length === 6) { // Format: #RRGGBB
+        r = parseInt(hex.substring(0, 2), 16) / 255;
+        g = parseInt(hex.substring(2, 4), 16) / 255;
+        b = parseInt(hex.substring(4, 6), 16) / 255;
+    } else if (hex.length === 8) { // Format: #RRGGBBAA
+        r = parseInt(hex.substring(0, 2), 16) / 255;
+        g = parseInt(hex.substring(2, 4), 16) / 255;
+        b = parseInt(hex.substring(4, 6), 16) / 255;
+        a = parseInt(hex.substring(6, 8), 16) / 255;
+    } else { // Fallback to white
+        r = g = b = 1.0;
+        a = 1.0;
+    }
+    return { r, g, b, a };
 }
 
 export default class MyExtension extends Extension {
@@ -185,7 +199,7 @@ export default class MyExtension extends Extension {
         let [totalWidth, h] = this.area.get_surface_size();
         let cr = this.area.get_context();
         // clear background
-        cr.setSourceColor(COLOR_BACKGROUND);
+        cr.setSourceRGBA(COLOR_BACKGROUND.r, COLOR_BACKGROUND.g, COLOR_BACKGROUND.b, COLOR_BACKGROUND.a);
         cr.rectangle(0, 0, totalWidth, h);
         cr.fill();
 
@@ -203,7 +217,8 @@ export default class MyExtension extends Extension {
         for (let core = 0; core < cores; core++) {
             const usage = DEBUG_RANDOM ? Math.random() : cpuUsage[core + 1].usage;
             const colorIndex = core % CORE_COLORS.length;
-            cr.setSourceColor(CORE_COLORS[colorIndex]);
+            const color = CORE_COLORS[colorIndex];
+            cr.setSourceRGBA(color.r, color.g, color.b, color.a);
             cr.rectangle(xOffset + core * binW, yOffset + h * (1 - usage), binW, h * usage);
             cr.fill();
         }
@@ -217,15 +232,15 @@ export default class MyExtension extends Extension {
         const smallDim = Math.min(w, h);
         const radius = smallDim/2;
         let angle = 0;
-        
+
         const totalMem = this.memStats.total;
-        cr.setSourceColor(COLOR_MEM_USED);
+        cr.setSourceRGBA(COLOR_MEM_USED.r, COLOR_MEM_USED.g, COLOR_MEM_USED.b, COLOR_MEM_USED.a);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.used / totalMem);
-        cr.setSourceColor(COLOR_MEM_CACHED);
+        cr.setSourceRGBA(COLOR_MEM_CACHED.r, COLOR_MEM_CACHED.g, COLOR_MEM_CACHED.b, COLOR_MEM_CACHED.a);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.cached / totalMem);
-        cr.setSourceColor(COLOR_MEM_BUFFERS);
+        cr.setSourceRGBA(COLOR_MEM_BUFFERS.r, COLOR_MEM_BUFFERS.g, COLOR_MEM_BUFFERS.b, COLOR_MEM_BUFFERS.a);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.buffers / totalMem);
-        cr.setSourceColor(COLOR_MEM_DIRTY);
+        cr.setSourceRGBA(COLOR_MEM_DIRTY.r, COLOR_MEM_DIRTY.g, COLOR_MEM_DIRTY.b, COLOR_MEM_DIRTY.a);
         angle = this._drawMemoryPiece(cr, centerX, centerY, radius, angle, this.memStats.dirtyWriteback / totalMem);
 
         this._drawMemorySwap(cr, xOffset, yOffset, w, h); // Swap fill
@@ -243,7 +258,7 @@ export default class MyExtension extends Extension {
     }
 
     _drawMemorySwap(cr, xOffset, yOffset, w, h) {
-        cr.setSourceColor(COLOR_SWAP);
+        cr.setSourceRGBA(COLOR_SWAP.r, COLOR_SWAP.g, COLOR_SWAP.b, COLOR_SWAP.a);
         const swapUsage = this.memStats.swapUsage || 0;
         cr.rectangle(xOffset, yOffset + h * (1 - swapUsage), w, h * swapUsage);
         cr.fill();
